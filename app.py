@@ -9,10 +9,10 @@ import datetime
 import pytz
 
 con = mysql.connector.connect(
-    host="185.232.14.52",
-    database="u760464709_tst_sep",
-    user="u760464709_tst_sep_usr",
-    password="dJ0CIAFF="
+app_id = "1889312"
+key = "5918e984cc31802c0cbb"
+secret = "d6fa4a63c867604e0007"
+cluster = "us2"
 )
 
 app = Flask(__name__)
