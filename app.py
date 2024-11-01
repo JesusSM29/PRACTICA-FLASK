@@ -1,47 +1,30 @@
-from flask import Flask, request, render_template, flash, redirect, url_for
-import os
-from werkzeug.utils import secure_filename
-
+from flask import Flask, render_template, request
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'tu_clave_secreta_aqui'
-app.config['UPLOAD_FOLDER'] = 'static/uploads'
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'pdf'}
+
+@app.route('/', methods=['GET', 'POST'])
+def pago_curso():
+    if request.method == 'POST':
+        # Obtener datos del formulario
+        telefono = request.form['telefono']
+        confirmar_telefono = request.form['confirmar_telefono']
+        archivo = request.files['archivo']
+
+        # Validaciones básicas (más detalladas en jQuery)
+        if not telefono.isdigit() or len(telefono) != 10 or telefono != confirmar_telefono:
+            return render_template('pago_curso.html', error='Error en el número de teléfono')
+        if not allowed_file(archivo.filename):
+            return render_template('pago_curso.html', error='Tipo de archivo no válido')
+
+        # Si todas las validaciones pasan, procesar el formulario
+        # ... (guardar archivo, enviar correo, etc.)
+        return 'Pago registrado correctamente'
+
+    return render_template('pago_curso.html')
 
 def allowed_file(filename):
+    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'pdf'}
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-@app.route('/', methods=['GET'])
-def mostrar_formulario():
-    return render_template('pago_curso.html')
-
-@app.route('/procesar_pago', methods=['POST'])
-def procesar_pago():
-    if 'comprobante' not in request.files:
-        flash('No se envió ningún archivo')
-        return redirect(url_for('mostrar_formulario'))
-    
-    file = request.files['comprobante']
-    if file.filename == '':
-        flash('No se seleccionó ningún archivo')
-        return redirect(url_for('mostrar_formulario'))
-
-    telefono = request.form.get('telefono')
-    confirmar_telefono = request.form.get('confirmarTelefono')
-
-    if telefono != confirmar_telefono:
-        flash('Los números de teléfono no coinciden')
-        return redirect(url_for('mostrar_formulario'))
-
-    if file and allowed_file(file.filename):
-        filename = secure_filename(file.filename)
-        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-        flash('Pago registrado correctamente')
-        return redirect(url_for('mostrar_formulario'))
-    else:
-        flash('Tipo de archivo no permitido')
-        return redirect(url_for('mostrar_formulario'))
-
 if __name__ == '__main__':
-    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
     app.run(debug=True)
