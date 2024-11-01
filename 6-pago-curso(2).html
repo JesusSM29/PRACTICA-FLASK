@@ -1,75 +1,47 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+from flask import Flask, request, render_template, flash, redirect, url_for
+import os
+from werkzeug.utils import secure_filename
 
-    <title>Pago Curso</title>
-</head>
-<body>
-    <p><b>Partiendo de los ejemplos introductorios a JQuery Validation para pruebas y de acuerdo al CDU dado:</b></p>
-    <ul>
-        <li>Coloca tu nombre y apellido.</li>
-        <li>Añade las librerías, JQuery, JQuery Validation y Bootstrap.</li>
-        <li>Diseña el formulario, recuerda usar las buenas prácticas usar ID, NAME y con valores únicos.</li>
-        <li>Realiza las validaciones.</li>
-        <li>Selecciona las excepciones y desarrollalas con el mensaje que hayas definido.</li>
-    </ul>
-    <p><b>Nombre del Alumno: </b></p>
-    <!-- table index 1 -->
-    <table class="table table-sm">
-        <thead>
-            <tr>
-                <th colspan="2">
-                    CDU
-                </th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <th>Nombre:</th>
-                <td>Pago Curso.</td>
-            </tr>
-            <tr>
-                <th>Actores:</th>
-                <td>Visitante.</td>
-            </tr>
-            <tr>
-                <th>Disparadores:</th>
-                <td>Ninguno.</td>
-            </tr>
-            <tr>
-                <th colspan="2">Flujo</th>
-            </tr>
-            <tr>
-                <td colspan="2">
-                    <p>El usuario accede a la opción "pago curso" y llena datos en el formulario:</p>
-                    <ul type="square">
-                        <li>Teléfono, requerido, solo números enteros, solo 10 caracteres y de confirmación.</li>
-                        <li>Archivo, requerido, solo imágenes y PDF's.</li>
-                    </ul>
-                    <p>Una vez lleno el formulario, da clic al botón que dice "Enviar Comprobante".</p>
-                </td>
-            </tr>
-            <tr>
-                <th colspan="2">Excepciones</th>
-            </tr>
-            <tr>
-                <td colspan="2">
-                    <ul type="square">
-                        <li>Si falla en los requeridos. <b>Poner el mensaje que dirá</b>.</li>
-                        <li>Si falla en el mínimo/máximo caracteres. <b>Poner el mensaje que dirá</b>.</li>
-                        <li>Si falla en el mínimo/máximo cantidad. <b>Poner el mensaje que dirá</b>.</li>
-                        <li>Si falla en el solo números. <b>Poner el mensaje que dirá</b>.</li>
-                        <li>Si falla en el solo números enteros. <b>Poner el mensaje que dirá</b>.</li>
-                        <li>Si falla en el solo letras, alfanumérico, o en algún otro patrón. <b>Poner el mensaje que dirá</b>.</li>
-                        <li>Si falla en el control de espacios (Multiples o sin estos). <b>Poner el mensaje que dirá</b>.</li>
-                        <li>Si falla en alguna confirmación. <b>Poner el mensaje que dirá</b>.</li>
-                        <li>Si falla en alguna otra validación. <b>Poner el mensaje que dirá</b>.</li>
-                    </ul>
-                </td>
-            </tr>
-        </tbody>
-    </table>
-</body>
-</html>
+app = Flask(__name__)
+app.config['SECRET_KEY'] = 'tu_clave_secreta_aqui'
+app.config['UPLOAD_FOLDER'] = 'static/uploads'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'pdf'}
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@app.route('/', methods=['GET'])
+def mostrar_formulario():
+    return render_template('pago_curso.html')
+
+@app.route('/procesar_pago', methods=['POST'])
+def procesar_pago():
+    if 'comprobante' not in request.files:
+        flash('No se envió ningún archivo')
+        return redirect(url_for('mostrar_formulario'))
+    
+    file = request.files['comprobante']
+    if file.filename == '':
+        flash('No se seleccionó ningún archivo')
+        return redirect(url_for('mostrar_formulario'))
+
+    telefono = request.form.get('telefono')
+    confirmar_telefono = request.form.get('confirmarTelefono')
+
+    if telefono != confirmar_telefono:
+        flash('Los números de teléfono no coinciden')
+        return redirect(url_for('mostrar_formulario'))
+
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        flash('Pago registrado correctamente')
+        return redirect(url_for('mostrar_formulario'))
+    else:
+        flash('Tipo de archivo no permitido')
+        return redirect(url_for('mostrar_formulario'))
+
+if __name__ == '__main__':
+    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+    app.run(debug=True)
