@@ -8,11 +8,12 @@ import mysql.connector
 import datetime
 import pytz
 
-con = mysql.connector.connect(
-app_id = "1889312"
-key = "5918e984cc31802c0cbb"
-secret = "d6fa4a63c867604e0007"
-cluster = "us2"
+pusher_client = pusher.Pusher(
+  app_id='1766046',
+  key='50e9a254ee847227d76b',
+  secret='03a5d47140d33225c346',
+  cluster='us2',
+  ssl=True
 )
 
 app = Flask(__name__)
